@@ -62,7 +62,7 @@ object Common {
   private val artifactPrefix = "ibm-spark"
   lazy val sparkVersion = {
     val sparkEnvironmentVariable = "APACHE_SPARK_VERSION"
-    val defaultSparkVersion = "1.5.0-cdh5.5.0"
+    val defaultSparkVersion = "1.6.0-cdh5.7.0"
 
     val _sparkVersion = Properties.envOrNone(sparkEnvironmentVariable)
 
