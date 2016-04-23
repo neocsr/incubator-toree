@@ -15,29 +15,37 @@
 # limitations under the License.
 #
 
-build/
-**/derby.log
-**/metastore_db
-**/*__pycache__
-**.swp
-target/
-.idea/
-.idea_modules/
-.DS_Store
-.vagrant
-*.iml
-*.ipynb
-.ipynb_checkpoints/
-apache-rat-*.jar
-!etc/**/*.ipynb
-scratch/
-**/*ivy.xml
-test-output/
-out/
-dist/
 
-.example-image
-.ensime
-.ensime_cache/
+# Files from sparkr which should not be changed
+.lintr
+package-sparkR.sh
+.*md
+.*sparkr-interpreter/src/main/.*
+NAMESPACE
+DESCRIPTION
+.*gitignore
 
-Untitled*.ipynb
+# Files which do not support comments
+\.src-release-ignore
+.*ipynb
+.*txt
+.*json
+.*\.md5
+.*\.asc
+.*\.sha
+NOTICE_extras
+LICENSE_extras
+
+# Auto-generated files and directories
+.*iml
+.*ivy.xml
+\.example-image
+\.ensime
+\.jvmopts
+db.lck
+VERSION
+PKG-INFO
+derby.log
+service.properties
+MANIFEST.in
+target

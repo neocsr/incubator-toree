@@ -20,14 +20,3 @@
 //
 libraryDependencies += (if (Common.sparkVersion.contains("cdh")) "org.spark-project.akka" % "akka-testkit_2.10" % "2.2.3-shaded-protobuf" % "test" else "org.spark-project.akka" %% "akka-testkit" % "2.3.4-spark" % "test") // MIT
 
-assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = false)
-
-//
-// CUSTOM TASKS
-//
-
-lazy val kill = taskKey[Unit]("Executing the shell script.")
-
-kill := {
-  "sh scripts/terminate_spark_kernels.sh".!
-}

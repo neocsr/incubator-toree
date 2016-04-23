@@ -19,20 +19,15 @@ import org.apache.commons.io.FileUtils
 import sbt._
 import Keys._
 import coursier.Keys._
-
+import com.typesafe.sbt.pgp.PgpKeys._
 import scala.util.{Try, Properties}
 
 object Common {
   //  Parameters for publishing to artifact repositories
   val versionNumber             = Properties.envOrElse("VERSION", "0.0.0-dev")
   val snapshot                  = Properties.envOrElse("IS_SNAPSHOT","true").toBoolean
-  val repoPort                  = Properties.envOrElse("REPO_PORT","")
-  val repoHost                  = Properties.envOrElse("REPO_HOST","")
-  val repoUsername              = Properties.envOrElse("REPO_USERNAME","")
-  val repoPassword              = Properties.envOrElse("REPO_PASSWORD","")
-  val repoEndpoint              = Properties.envOrElse("REPO_ENDPOINT", if(snapshot) "/nexus/content/repositories/snapshots/" else "/nexus/content/repositories/releases/")
-  val repoUrl                   = Properties.envOrElse("REPO_URL", s"http://${repoHost}:${repoPort}${repoEndpoint}")
-
+  val gpgLocation               = Properties.envOrElse("GPG","/usr/local/bin/gpg")
+  val gpgPassword               = Properties.envOrElse("GPG_PASSWORD","")
 
   private val buildOrganization = "org.apache.toree"
   private val buildVersion      =
@@ -85,11 +80,39 @@ object Common {
 
   val settings: Seq[Def.Setting[_]] = Seq(
     organization := buildOrganization,
+    useGpg := true,
+    gpgCommand := gpgLocation,
+    pgpPassphrase in Global := Some(gpgPassword.toArray),
     version := buildVersion,
     scalaVersion := buildScalaVersion,
     libraryDependencies ++= buildLibraryDependencies,
     isSnapshot := snapshot,
     resolvers ++= buildResolvers,
+
+    pomExtra :=
+      <parent>
+        <groupId>org.apache</groupId>
+        <artifactId>apache</artifactId>
+        <version>10</version>
+      </parent>
+      <licenses>
+        <license>
+          <name>Apache 2</name>
+          <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+          <distribution>repo</distribution>
+        </license>
+      </licenses>
+      <url>http://toree.incubator.apache.org/</url>
+      <scm>
+        <connection>scm:git:git@github.com:apache/incubator-toree.git</connection>
+        <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/incubator-toree.git</developerConnection>
+        <url>scm:git:git@github.com:apache/incubator-toree.git</url>
+        <tag>HEAD</tag>
+      </scm>,
+
+    mappings in packageBin in Compile += file("LICENSE") -> "LICENSE",
+    mappings in packageBin in Compile += file("NOTICE") -> "NOTICE",
+
     coursierVerbosity := {
       val level = Try(Integer.valueOf(Properties.envOrElse(
         "TOREE_RESOLUTION_VERBOSITY", "1")
@@ -153,9 +176,14 @@ object Common {
     unmanagedResourceDirectories in Test +=
       (baseDirectory in Build.root).value / "resources/test",
 
-    publishTo := Some("Spark Kernel Nexus Repo" at repoUrl),
-
-    credentials += Credentials("Sonatype Nexus Repository Manager", repoHost, repoUsername, repoPassword),
+    // Publish Settings
+    publishTo := {
+      if (isSnapshot.value)
+        Some("Apache Staging Repo" at "https://repository.apache.org/content/repositories/snapshots/")
+      else
+        Some("Apache Staging Repo" at "https://repository.apache.org/content/repositories/staging/")
+    },
+    credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),
 
     // Add rebuild ivy xml to the following tasks
     compile <<= (compile in Compile) dependsOn (rebuildIvyXml dependsOn deliverLocal)

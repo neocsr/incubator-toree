@@ -15,13 +15,26 @@
  *  limitations under the License
  */
 
-package test.utils
+package org.apache.toree.kernel.protocol.v5.content
 
-import akka.testkit.TestKit
+import org.apache.toree.kernel.protocol.v5.KernelMessageContent
+import play.api.libs.json.Json
 
-class NoArgSparkKernelTestKit
-  extends TestKit(SparkKernelDeployer.getNoArgSparkKernelActorSystem)
-{
-  // Force initialization of no-arg Spark Kernel
-  SparkKernelDeployer.noArgKernelBootstrap
+case class CommInfoRequest(
+  target_name: String
+) extends KernelMessageContent {
+  override def content : String =
+    Json.toJson(this)(CommInfoRequest.commInfoRequestWrites).toString
+}
+
+object CommInfoRequest extends TypeString {
+  implicit val commInfoRequestReads = Json.reads[CommInfoRequest]
+  implicit val commInfoRequestWrites = Json.writes[CommInfoRequest]
+
+  /**
+   * Returns the type string associated with this object.
+   *
+   * @return The type as a string
+   */
+  override def toTypeString: String = "comm_info_request"
 }
