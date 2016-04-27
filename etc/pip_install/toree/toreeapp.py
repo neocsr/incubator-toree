@@ -38,6 +38,7 @@ PYTHON_PATH = 'PYTHONPATH'
 SPARK_HOME ='SPARK_HOME'
 TOREE_SPARK_OPTS = '__TOREE_SPARK_OPTS__'
 DEFAULT_INTERPRETER = 'DEFAULT_INTERPRETER'
+PYTHON_EXEC = 'PYTHON_EXEC'
 
 class ToreeInstall(InstallKernelSpec):
     '''CLI for extension management.'''
@@ -49,6 +50,7 @@ class ToreeInstall(InstallKernelSpec):
     jupyter toree install --spark_opts='--master=local[4]'
     jupyter toree install --kernel_name=toree_special
     jupyter toree install --interpreters=PySpark,SQL
+    jupyter toree install --python=python
     '''
 
     spark_home = Unicode('/usr/local/spark', config=True,
@@ -63,11 +65,15 @@ class ToreeInstall(InstallKernelSpec):
     spark_opts = Unicode('', config=True,
         help='''Specify command line arguments to proxy for spark config.'''
     )
+    python_exec = Unicode('python', config=True,
+        help='''Specify the python executable. Defaults to "python"'''
+    )
     aliases = {
         'kernel_name': 'ToreeInstall.kernel_name',
         'spark_home': 'ToreeInstall.spark_home',
         'spark_opts': 'ToreeInstall.spark_opts',
-        'interpreters' : 'ToreeInstall.interpreters'
+        'interpreters' : 'ToreeInstall.interpreters',
+        'python_exec' : 'ToreeInstall.python_exec'
     }
     aliases.update(base_aliases)
 
@@ -93,7 +99,8 @@ class ToreeInstall(InstallKernelSpec):
             # are run. This allows values to be specified during install, but also during runtime.
             TOREE_SPARK_OPTS : self.spark_opts,
             SPARK_HOME : self.spark_home,
-            PYTHON_PATH : '{0}/python:{0}/python/lib/{1}'.format(self.spark_home, py4j_zip)
+            PYTHON_PATH : '{0}/python:{0}/python/lib/{1}'.format(self.spark_home, py4j_zip),
+            PYTHON_EXEC : self.python_exec
         }
 
         kernel_json_file = os.path.join(location, 'kernel.json')
