@@ -15,7 +15,7 @@
 # limitations under the License
 #
 
-.PHONY: help clean clean-dist build dev test test-travis release pip-release bin-release dev-binder .binder-image audit
+.PHONY: help clean clean-dist build dev test test-travis release pip-release bin-release dev-binder .binder-image audit audit-licenses
 
 VERSION?=0.1.0.dev6-incubating
 COMMIT=$(shell git rev-parse --short=12 --verify HEAD)
@@ -160,11 +160,6 @@ dist/toree: dist/toree/VERSION dist/toree-legal dist/toree/lib dist/toree/bin RE
 
 dist: dist/toree
 
-test-travis:
-	$(ENV_OPTS) sbt clean test -Dakka.test.timefactor=3
-	find $(HOME)/.sbt -name "*.lock" | xargs rm
-	find $(HOME)/.ivy2 -name "ivydata-*.properties" | xargs rm
-	
 define JUPYTER_COMMAND
 pip install toree-$(VERSION).tar.gz
 jupyter toree install --interpreters=PySpark,SQL,Scala,SparkR
@@ -200,12 +195,12 @@ dist/toree-pip/toree-$(VERSION).tar.gz: dist/toree
 	@$(GEN_PIP_PACKAGE_INFO)
 	@$(DOCKER) $(IMAGE) python setup.py sdist --dist-dir=.
 	@$(DOCKER) -p 8888:8888 --user=root  $(IMAGE) bash -c	'pip install toree-$(VERSION).tar.gz && jupyter toree install'
-	@find dist/toree-pip -type f -not -name 'toree-0.1.0.dev5-incubating.tar.gz' -maxdepth 1 | xargs rm
+	-@(cd dist/toree-pip; find . -not -name 'toree-$(VERSION).tar.gz' -maxdepth 1 | xargs rm -r )
 
 pip-release: dist/toree-pip/toree-$(VERSION).tar.gz
 
 dist/toree-pip/toree-$(VERSION).tar.gz.md5 dist/toree-pip/toree-$(VERSION).tar.gz.asc dist/toree-pip/toree-$(VERSION).tar.gz.sha: dist/toree-pip/toree-$(VERSION).tar.gz
-	@GPG_PASSWORD=$(GPG_PASSWORD) GPG=$(GPG) etc/tools/./sign-file dist/toree-pip/toree-$(VERSION).tar.gz
+	@GPG_PASSWORD='$(GPG_PASSWORD)' GPG=$(GPG) etc/tools/./sign-file dist/toree-pip/toree-$(VERSION).tar.gz
 
 sign-pip: dist/toree-pip/toree-$(VERSION).tar.gz.md5 dist/toree-pip/toree-$(VERSION).tar.gz.asc dist/toree-pip/toree-$(VERSION).tar.gz.sha
 
@@ -229,7 +224,7 @@ dist/toree-bin/toree-$(VERSION)-binary-release.tar.gz: dist/toree
 bin-release: dist/toree-bin/toree-$(VERSION)-binary-release.tar.gz
 
 dist/toree-bin/toree-$(VERSION)-binary-release.tar.gz.md5 dist/toree-bin/toree-$(VERSION)-binary-release.tar.gz.asc dist/toree-bin/toree-$(VERSION)-binary-release.tar.gz.sha: dist/toree-bin/toree-$(VERSION)-binary-release.tar.gz
-	@GPG_PASSWORD=$(GPG_PASSWORD) GPG=$(GPG) etc/tools/./sign-file dist/toree-bin/toree-$(VERSION)-binary-release.tar.gz
+	@GPG_PASSWORD='$(GPG_PASSWORD)' GPG=$(GPG) etc/tools/./sign-file dist/toree-bin/toree-$(VERSION)-binary-release.tar.gz
 
 sign-bin: dist/toree-bin/toree-$(VERSION)-binary-release.tar.gz.md5 dist/toree-bin/toree-$(VERSION)-binary-release.tar.gz.asc dist/toree-bin/toree-$(VERSION)-binary-release.tar.gz.sha
 
@@ -245,7 +240,7 @@ dist/toree-src/toree-$(VERSION)-source-release.tar.gz:
 src-release: dist/toree-src/toree-$(VERSION)-source-release.tar.gz
 
 dist/toree-src/toree-$(VERSION)-source-release.tar.gz.md5 dist/toree-src/toree-$(VERSION)-source-release.tar.gz.asc dist/toree-src/toree-$(VERSION)-source-release.tar.gz.sha: dist/toree-src/toree-$(VERSION)-source-release.tar.gz
-	@GPG_PASSWORD=$(GPG_PASSWORD) GPG=$(GPG) etc/tools/./sign-file dist/toree-src/toree-$(VERSION)-source-release.tar.gz
+	@GPG_PASSWORD='$(GPG_PASSWORD)' GPG=$(GPG) etc/tools/./sign-file dist/toree-src/toree-$(VERSION)-source-release.tar.gz
 
 sign-src: dist/toree-src/toree-$(VERSION)-source-release.tar.gz.md5 dist/toree-src/toree-$(VERSION)-source-release.tar.gz.asc dist/toree-src/toree-$(VERSION)-source-release.tar.gz.sha
 
@@ -258,11 +253,19 @@ release: pip-release src-release bin-release sign
 
 sign: sign-bin sign-src sign-pip
 
-audit: sign
+audit-licenses:
 	@etc/tools/./check-licenses
+
+audit: sign audit-licenses
 	@etc/tools/./verify-release dist/toree-bin dist/toree-src dist/toree-pip
 
 publish: audit publish-bin publish-pip publish-src publish-jars
 
 all: clean test audit
+
+all-travis: clean test audit-licenses
+
+clean-travis:
+	find $(HOME)/.sbt -name "*.lock" | xargs rm
+	find $(HOME)/.ivy2 -name "ivydata-*.properties" | xargs rm
 

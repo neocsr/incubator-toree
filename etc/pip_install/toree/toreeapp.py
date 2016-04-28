@@ -37,7 +37,9 @@ INTERPRETER_LANGUAGES = {
 PYTHON_PATH = 'PYTHONPATH'
 SPARK_HOME ='SPARK_HOME'
 TOREE_SPARK_OPTS = '__TOREE_SPARK_OPTS__'
+TOREE_OPTS = '__TOREE_OPTS__'
 DEFAULT_INTERPRETER = 'DEFAULT_INTERPRETER'
+PYTHON_EXEC = 'PYTHON_EXEC'
 
 class ToreeInstall(InstallKernelSpec):
     '''CLI for extension management.'''
@@ -48,7 +50,9 @@ class ToreeInstall(InstallKernelSpec):
     jupyter toree install --spark_home=/spark/home/dir
     jupyter toree install --spark_opts='--master=local[4]'
     jupyter toree install --kernel_name=toree_special
+    jupyter toree install --toree_opts='--nosparkcontext'
     jupyter toree install --interpreters=PySpark,SQL
+    jupyter toree install --python=python
     '''
 
     spark_home = Unicode('/usr/local/spark', config=True,
@@ -60,14 +64,22 @@ class ToreeInstall(InstallKernelSpec):
     interpreters = Unicode('Scala', config=True,
         help='A comma separated list of the interpreters to install. The names of the interpreters are case sensitive.'
     )
+    toree_opts = Unicode('', config=True,
+        help='''Specify command line arguments for Apache Toree.'''
+    )
     spark_opts = Unicode('', config=True,
         help='''Specify command line arguments to proxy for spark config.'''
+    )
+    python_exec = Unicode('python', config=True,
+        help='''Specify the python executable. Defaults to "python"'''
     )
     aliases = {
         'kernel_name': 'ToreeInstall.kernel_name',
         'spark_home': 'ToreeInstall.spark_home',
+        'toree_opts': 'ToreeInstall.toree_opts',
         'spark_opts': 'ToreeInstall.spark_opts',
-        'interpreters' : 'ToreeInstall.interpreters'
+        'interpreters' : 'ToreeInstall.interpreters',
+        'python_exec' : 'ToreeInstall.python_exec'
     }
     aliases.update(base_aliases)
 
@@ -92,8 +104,10 @@ class ToreeInstall(InstallKernelSpec):
             # The SPARK_OPTS values are stored in TOREE_SPARK_OPTS to allow the two values to be merged when kernels
             # are run. This allows values to be specified during install, but also during runtime.
             TOREE_SPARK_OPTS : self.spark_opts,
+            TOREE_OPTS : self.toree_opts,
             SPARK_HOME : self.spark_home,
-            PYTHON_PATH : '{0}/python:{0}/python/lib/{1}'.format(self.spark_home, py4j_zip)
+            PYTHON_PATH : '{0}/python:{0}/python/lib/{1}'.format(self.spark_home, py4j_zip),
+            PYTHON_EXEC : self.python_exec
         }
 
         kernel_json_file = os.path.join(location, 'kernel.json')
