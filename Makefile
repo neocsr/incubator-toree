@@ -17,7 +17,7 @@
 
 .PHONY: help clean clean-dist build dev test test-travis release pip-release bin-release dev-binder .binder-image audit audit-licenses
 
-BASE_VERSION=0.1.0.dev6
+BASE_VERSION=0.1.0.dev7
 VERSION=$(BASE_VERSION)-incubating
 COMMIT=$(shell git rev-parse --short=12 --verify HEAD)
 ifeq (, $(findstring dev, $(VERSION)))
@@ -162,7 +162,7 @@ dist/toree: dist/toree/VERSION dist/toree-legal dist/toree/lib dist/toree/bin RE
 dist: dist/toree
 
 define JUPYTER_COMMAND
-pip install toree-$(VERSION).tar.gz
+pip install toree-$(BASE_VERSION).tar.gz
 jupyter toree install --interpreters=PySpark,SQL,Scala,SparkR
 cd /srv/toree/etc/examples/notebooks
 jupyter notebook --ip=* --no-browser
@@ -177,7 +177,7 @@ jupyter: .example-image pip-release
 # Jars
 ################################################################################
 publish-jars:
-	@$(ENV_OPTS) GPG_PASSWORD=$(GPG_PASSWORD) GPG=$(GPG) sbt publish-signed
+	@$(ENV_OPTS) GPG_PASSWORD='$(GPG_PASSWORD)' GPG=$(GPG) sbt publish-signed
 	
 ################################################################################
 # PIP PACKAGE 
